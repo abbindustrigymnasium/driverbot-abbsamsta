@@ -20,4 +20,4 @@ Jag har hittils kommmit ungefär halvvägs.
 Efter att jag gjort den sista printen under söndagskvällen så kunde jag fixa nätverket hemma för att kunna styra bilen via nätverket hemma. Jag har även börjat skissa upp hur jag möjligtvis skulle kunna förbättra kugghjulen till de bakrehjulen. Jag har även använt mig av Microsoft To-Do programm för att planera och skriva upp allt jag har att göra i de olika ämnena.
 
 ### Tisdag - 24/3
-Idag har jag gjort de uppgifter som presenterdes i ellära intro.mp4
+Idag har jag gjort de uppgifter som presenterdes i ellära intro.mp4. Under resten av dagen jobbade jag med wireshark programmet. Jag kom väldigt långt och är nästan klar med något jag trodde skulle ta mycket längre tid.
