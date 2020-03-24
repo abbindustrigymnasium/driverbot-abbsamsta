@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 
-<script src="https://cdn.jsdelivr.net/alasql/0.3/alasql.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.12/xlsx.core.min.js"></script>
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.12/xlsx.core.min.js"></script> -->
+<script src="dist/jquery-3.4.1.min.js"></script>
+<script land="javascript" src="dist/xlsx.full.min.js"></script>
+<script land="javascript" src="dist/FileSaver.min.js"></script>
 
 <head>
     <title>Convert Wireshark to Excel</title>
@@ -14,36 +14,76 @@
     <h1>Convert Wireshark to Excel</h1>
     <p>Choose PDML file</p>
     <input type="file" id="wsFile" name="wsFile"><br>
-    <button onclick="saveFile()">Save XLSX file</button>
+    <button id="button-save">Save XLSX file</button>
 
     <br>
     <p id="statusCheck"></p>
     <br>
-    <p>http.file_data ></p>
-    <p id="amountA"></p>
-    <br>
-    <p>CstInfos</p>
-    <p id="amountC"></p>
-    <br>
-    <p>Models</p>
-    <p id="Models"></p>
-
-    <div id="colums">
-        <div class="perColum" id="VehicleModel">VehicleModel</div>
-        <div class="perColum" id="BlockId">BlockId</div>
-        <div class="perColum" id="CurrentStationID">CurrentStationID</div>
-        <div class="perColum" id="DestinationStationID">DestinationStationID</div>
-        <div class="perColum" id="DistanceToNextStationM">DistanceToNextStationM</div>
-        <div class="perColum" id="DoorOpen">DoorOpen</div>
-        <div class="perColum" id="DoorsClosed">DoorsClosed</div>
-        <div class="perColum" id="DrivingDirection">DrivingDirection</div>
-        <div class="perColum" id="NextStationID">NextStationID</div>
-        <div class="perColum" id="LastUpdated">LastUpdated</div>
-        <div class="perColum" id="MaxNumberOfStreams">MaxNumberOfStreams</div>
+    <div id="progress_bar">
+        <div class="percent">
+            0%
+        </div>
     </div>
+    <br>
+    <!-- <p id="AmountPackets">-</p>
+    <br>
+    <p id="AmountFields">-</p>
+    <br>
+    <p id="AmountCstInfos">-</p> -->
+    <div id=myTable></div>
+
+
 
 </body>
 <script>
+    function CreateTable() {
+        var myTable = '<table style="width:100%"'
+        var rows = 4;
+        var cols = 10;
+
+        myTable += '<tr>';
+        myTable +=
+            '<th>Frame Number</th>' +
+            '<th>Frame Arrival</th>' +
+            '<th>CstLabel</th>' +
+            '<th>CstLabels</th>' +
+            '<th>Vehicle Model</th>' +
+            '<th>CarTypes</th>' +
+            '<th>BlockId</th>' +
+            '<th>Driving Direction</th>' +
+            '<th>Current StationID</th>' +
+            '<th>Current Station</th>' +
+            '<th>Next Station</th>' +
+            '<th>Next StationID</th>' +
+            '<th>Distance To Next StationM</th>' +
+            '<th>Destination Station</th>' +
+            '<th>Destination StationID</th>' +
+            '<th>Door Open </th>' +
+            '<th>Doors Closed </th>' +
+            '<th>Has Changed </th>' +
+            '<th>Last Updated </th>' +
+            '<th>Max Number Of Streams </th>'
+        myTable += '</tr>';
+
+        console.log(ws_data)
+        console.log(ws_data.length)
+        console.log(ws_data)
+        console.log(ws_data[1])
+
+        for (var r = 0; r < ws_data.length; r++) {
+            myTable += '<tr>';
+
+            for (var c = 0; c < ws_data[r].length; c++) {
+                myTable += '<td>' + ws_data[r][c] + '</td>';
+            }
+            myTable += '</tr>';
+        }
+        myTable += '</table>'
+
+        document.getElementById('myTable').innerHTML = myTable
+    }
+
+
     stationNames = ["Slussen", "Gamla stan", "T-Centralen", "Hötorget", "Rådmansgatan", "Odenplan", "S:t Eriksplan",
         "Fridhemsplan", "Thorildsplan", "Kristineberg", "Alvik", "Stora mossen", "Abrahamsberg", "Brommaplan",
         "Åkeshov", "Ängbyplan", "Islandstorget", "Blackeberg", "Råcksta", "Vällingby", "Johannelund",
@@ -71,27 +111,38 @@
     ]
 
     var wsFile = document.getElementById('wsFile');
+    var ws_data = []
+
 
     // ------ get infos funktioner --------------
     function GetStationName(x) {
-        a = ""
-        for (index, station in enumerate(stationNumber, start = 0)) {
-            chars = []
-            for (char in x) {
-                chars.append(char)
-            }
+        stationID = "" + x.charAt(-4) + x.charAt(-3) + x.charAt(-2) + x.charAt(-1)
 
-            stationID = ""
-            try {
-                stationID = chars[-4] + chars[-3] + chars[-2] + chars[-1]
-            }
-
+        stationNumber.forEach((station, index) => {
             if (station == stationID) {
                 x = stationNames[index]
-
             }
-        }
+        });
         return x
+    }
+
+    function CstLabel(x) {
+        x = x.split("CstLabel")
+        x = x[1].replace(">", "").replace("</", "")
+        x = x.charAt(10) + x.charAt(11) + x.charAt(12) + x.charAt(13)
+        return x
+    }
+
+    function CstLabels(x) {
+        x = x.split("CstLabels")
+        x = x[1].replace("</b:string>", "").split("<b:string>")
+        x.shift()
+        cars = ""
+        x.forEach(car => {
+            car = car.charAt(10) + car.charAt(11) + car.charAt(12) + car.charAt(13)
+            cars += car.replace("</", "") + " "
+        });
+        return cars
     }
 
     function VehicleModel(x) {
@@ -100,8 +151,25 @@
         return x
     }
 
+    function CarTypes(x) {
+        x = x.split("CarTypes")
+        x = x[1].replace("</b:string>", "").split("<b:string>")
+        x.shift()
+        cars = ""
+        x.forEach(car => {
+            cars = cars + car.replace("</", "") + ""
+        });
+        return x
+    }
+
     function BlockId(x) {
         x = x.split("BlockId")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function DrivingDirection(x) {
+        x = x.split("DrivingDirection")
         x = x[1].replace(">", "").replace("</", "")
         return x
     }
@@ -112,14 +180,43 @@
         return x
     }
 
-    function DestinationStationID(x) {
-        x = x.split("DestinationStation")
+    function CurrentStation(x) {
+        x = x.split("CurrentStation")
+        x = x[1].replace(">", "").replace("</", "")
+        x = GetStationName(x)
+        return x
+    }
+
+    function NextStation(x) {
+        x = x.replace("DistanceToNextStationM", "")
+        x = x.split("NextStation")
+        x = x[1].replace(">", "").replace("</", "")
+        x = GetStationName(x)
+        return x
+    }
+
+    function NextStationID(x) {
+        x = x.replace("DistanceToNextStationM", "")
+        x = x.split("NextStation")
         x = x[1].replace(">", "").replace("</", "")
         return x
     }
 
     function DistanceToNextStationM(x) {
         x = x.split("DistanceToNextStationM")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function DestinationStation(x) {
+        x = x.split("DestinationStation")
+        x = x[1].replace(">", "").replace("</", "")
+        x = GetStationName(x)
+        return x
+    }
+
+    function DestinationStationID(x) {
+        x = x.split("DestinationStation")
         x = x[1].replace(">", "").replace("</", "")
         return x
     }
@@ -136,15 +233,8 @@
         return x
     }
 
-    function DrivingDirection(x) {
-        x = x.split("DrivingDirection")
-        x = x[1].replace(">", "").replace("</", "")
-        return x
-    }
-
-    function NextStationID(x) {
-        x = x.replace("DistanceToNextStationM", "")
-        x = x.split("NextStation")
+    function HasChanged(x) {
+        x = x.split("HasChanged")
         x = x[1].replace(">", "").replace("</", "")
         return x
     }
@@ -171,77 +261,197 @@
     }
 
     // ------ get data from file --------------
-    function parseTextAsXml(text) {
-        document.getElementById("statusCheck").innerHTML = "Parsing file..."
+    // function parseTextAsXml(text) {
 
-        var parser = new DOMParser(),
-            xmlDoc = parser.parseFromString(text, "text/xml");
+    // }
 
-        document.getElementById("statusCheck").innerHTML = "Almost done!"
+    var reader;
+    var progress = document.querySelector('.percent');
 
-        allFields = xmlDoc.getElementsByTagName('field');
-        var i
-        for (i = 0; i < allFields.length; i++) {
-            if (allFields[i].getAttribute("name") == "http.file_data") {
-                document.getElementById("amountA").innerHTML += 1
-                document.getElementById("amountC").innerHTML += rawPacket(allFields[i].getAttribute("show")).length
-                allInfos = rawPacket(allFields[i].getAttribute("show"))
-                let ii
-                for (ii = 0; ii < allInfos.length; ii++) {
-                    // document.getElementById("VehicleModel").innerHTML += VehicleModel(allInfos[ii]) + " "
-                    // document.getElementById("BlockId").innerHTML += BlockId(allInfos[ii]) + " "
-                    document.getElementById("BlockId").innerHTML += BlockId(allInfos[ii]) + " "
-                }
+    function abortRead() {
+        reader.abort();
+    }
+
+    function errorHandler(evt) {
+        switch (evt.target.error.code) {
+            case evt.target.error.NOT_FOUND_ERR:
+                alert('File Not Found!');
+                break;
+            case evt.target.error.NOT_READABLE_ERR:
+                alert('File is not readable');
+                break;
+            case evt.target.error.ABORT_ERR:
+                break; // noop
+            default:
+                alert('An error occurred reading this file.');
+        };
+    }
+
+    function updateProgress(evt) {
+        // evt is an ProgressEvent.
+        if (evt.lengthComputable) {
+            var percentLoaded = Math.round((evt.loaded / evt.total) * 100);
+            // Increase the progress bar length.
+            if (percentLoaded < 100) {
+                progress.style.width = percentLoaded + '%';
+                progress.textContent = percentLoaded + '%';
             }
         }
-        document.getElementById("statusCheck").innerHTML = "Done!"
     }
 
-    // ------ at chosen file --------------
-    function waitForTextReadComplete(reader) {
-        document.getElementById("statusCheck").innerHTML = "Reading file..."
-        reader.onloadend = function (event) {
-            var text = event.target.result;
-            parseTextAsXml(text);
-        }
-    }
-
-    function handleFileSelection() {
+    function handleFileSelection(evt) {
+        // Reset progress indicator on new file selection.
         document.getElementById("statusCheck").innerHTML = "Loading file..."
+
+        var output = document.getElementById("result");
+        progress.style.width = '0%';
+        progress.textContent = '0%';
         var file = wsFile.files[0],
             reader = new FileReader();
-        waitForTextReadComplete(reader);
+        reader.onerror = errorHandler;
+        reader.onprogress = updateProgress;
+        reader.onabort = function (e) {
+            alert('File read cancelled');
+        };
+        reader.onloadstart = function (e) {
+            document.getElementById('progress_bar').className = 'loading';
+        };
+        document.getElementById("statusCheck").innerHTML = "Reading file..."
+        reader.onload = function (event) {
+
+            document.getElementById("statusCheck").innerHTML = "Inne i load"
+
+
+            var text = event.target.result;
+            document.getElementById("statusCheck").innerHTML = "Parsing file..."
+
+            var parser = new DOMParser(),
+                xmlDoc = parser.parseFromString(text, "text/xml");
+
+            document.getElementById("statusCheck").innerHTML = "Almost done!"
+
+
+            allPackets = xmlDoc.getElementsByTagName('packet');
+
+            var AmountPackets = 0
+            var AmountFields = 0
+            var AmountCstInfos = 0
+            Array.from(allPackets).forEach((packet, indexPacket) => {
+                AmountPackets += 1
+                allFields = packet.getElementsByTagName('field');
+
+                packetNumber = packet.getElementsByTagName('field')[0].getAttribute("show")
+                packetArrival = packet.getElementsByTagName('field')[3].getAttribute("show");
+
+
+
+                Array.from(allFields).forEach((field, indexField) => {
+                    AmountFields += 1
+
+                    if (field.getAttribute("name") == "http.file_data") {
+                        allInfos = rawPacket(field.getAttribute("show"))
+                        Array.from(allInfos).forEach((infos, indexInfo) => {
+
+
+                            ws_data[AmountCstInfos] = [
+                                packetNumber,
+                                packetArrival,
+                                CstLabel(infos),
+                                CstLabels(infos),
+                                VehicleModel(infos),
+                                CarTypes(infos),
+                                BlockId(infos),
+                                DrivingDirection(infos),
+                                CurrentStationID(infos),
+                                CurrentStation(infos),
+                                NextStation(infos),
+                                NextStationID(infos),
+                                DistanceToNextStationM(infos),
+                                DestinationStation(infos),
+                                DestinationStationID(infos),
+                                DoorOpen(infos),
+                                DoorsClosed(infos),
+                                HasChanged(infos),
+                                LastUpdated(infos),
+                                MaxNumberOfStreams(infos),
+                            ]
+                            AmountCstInfos += 1
+                        });
+                    }
+
+                });
+
+            });
+
+            // Ensure that the progress bar displays 100% at the end.
+            //console.log(ws_data)
+            CreateTable()
+            // document.getElementById("AmountPackets").innerHTML = AmountPackets
+            // document.getElementById("AmountFields").innerHTML = AmountFields
+            // document.getElementById("AmountCstInfos").innerHTML = AmountCstInfos
+            document.getElementById("statusCheck").innerHTML = "Done!"
+            progress.style.width = '100%';
+            progress.textContent = '100%';
+            setTimeout("document.getElementById('progress_bar').className='';", 2000);
+        }
+
+        // reader.onloadend = function (event) {
+
+        // }
         reader.readAsText(file);
+        // Read in the image file as a binary string.
+        //reader.readAsDataURL(evt.target.files[0]);
     }
+
+
+    // ------ at chosen file --------------
+    // function waitForTextReadComplete(reader) {
+    //     document.getElementById("statusCheck").innerHTML = "Reading file..."
+    //     reader.onloadend = function (event) {
+    //         var text = event.target.result;
+    //         parseTextAsXml(text);
+    //     }
+    // }
+
+    // function handleFileSelection() {
+    //     document.getElementById("statusCheck").innerHTML = "Loading file..."
+    //     var file = wsFile.files[0],
+    //         reader = new FileReader();
+    //     waitForTextReadComplete(reader);
+    //     reader.readAsText(file);
+    // }
     wsFile.addEventListener('change', handleFileSelection, false);
 
 
     // ------ save file --------------
-    window.saveFile = function saveFile() {
-        var sheet_1_data = [{
-            Col_One: 1,
-            Col_Two: 11
-        }, {
-            Col_One: 2,
-            Col_Two: 22
-        }];
-        var sheet_2_data = [{
-            Col_One: 10,
-            Col_Two: 110
-        }, {
-            Col_One: 20,
-            Col_Two: 220
-        }];
-        var opts = [{
-            sheetid: 'Sheet One',
-            header: true
-        }, {
-            sheetid: 'Sheet Two',
-            header: false
-        }];
-        var result = alasql('SELECT * INTO XLSX("sample_file.xlsx",?) FROM ?',
-            [opts, [sheet_1_data, sheet_2_data]]);
+
+
+    function s2ab(s) {
+        var buf = new ArrayBuffer(s.length);
+        var view = new Uint8Array(buf);
+        for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+
     }
+
+    $("#button-save").click(function () {
+        var wb = XLSX.utils.book_new()
+        wb.SheetNames.push("Test Sheet")
+        //var ws_data = [];
+        var ws = XLSX.utils.aoa_to_sheet(ws_data)
+        wb.Sheets["Test Sheet"] = ws;
+
+        var wbout = XLSX.write(wb, {
+            bookType: 'xlsx',
+            type: 'binary'
+        })
+
+        console.log(ws_data)
+        saveAs(new Blob([s2ab(wbout)], {
+            type: "application/octet-stream"
+        }), 'test.xlsx');
+        console.log(ws_data)
+    });
 </script>
 
 </html>
@@ -266,16 +476,32 @@
         font-size: 20px;
     }
 
-    #colums {
-        width: 100%;
-        height: 50px;
-        background-color: #5a5a5a;
+    table,
+    th,
+    td {
+        border: 1px solid #949494;
+        border-collapse: collapse;
     }
 
-    .perColum {
-        display: inline-block;
-        height: 100%;
-        border-right: 1px solid #949494;
-        border-left: 1px solid #949494;
+    #progress_bar {
+        margin: 10px 0;
+        padding: 3px;
+        border: 1px solid #000;
+        font-size: 14px;
+        clear: both;
+        opacity: 0;
+        -moz-transition: opacity 1s linear;
+        -o-transition: opacity 1s linear;
+        -webkit-transition: opacity 1s linear;
+    }
+
+    #progress_bar.loading {
+        opacity: 1.0;
+    }
+
+    #progress_bar .percent {
+        background-color: #99ccff;
+        height: auto;
+        width: 0;
     }
 </style>
