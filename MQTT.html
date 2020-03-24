@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"
+        type="text/javascript"></script>
+    <title>VibeMotor</title>
+</head>
+
+<body>
+    <p onclick=" Reverse()" id="reverseText">
+        Reverse
+    </p>
+    <p onclick="setSpeed(0)">
+        Speed 0
+    </p>
+    <p onclick="setSpeed(1000)">
+        Speed 1000
+    </p>
+    <p onclick="setRotation(60)">
+        Vänster
+    </p>
+    <p onclick="setRotation(90)">
+        Rakt
+    </p>
+    <p onclick="setRotation(120)">
+        Höger
+    </p>
+
+    <div class="slidecontainer">
+        <input type="range" min="600" max="1023" value="50" class="slider" id="setSpeed">
+        <p>Value: <span id="demo"></span></p>
+    </div>
+
+
+</body>
+
+<script>
+
+    clientID = "clientID_" + parseInt(Math.random() * 100);
+    host = "maqiatto.com"
+    port = 8883
+    username = "samuel.staflin@abbindustrigymnasium.se"
+    password = "Samuel0303"
+    topic = "samuel.staflin@abbindustrigymnasium.se/motor";
+
+    var connected = false
+    var reversed = false
+    var speed = "0000"
+    var rotation = "090"
+    var reversedT = "0"
+
+    // ------- Connect --------------------
+    function publish() {
+        console.log("Connecton succes! ", " Reversed: ", reversed, " Speed: ", speed, "Rotation: ", rotation);
+        message = reversedT + speed.toString() + rotation
+        console.log("Message: ", message)
+
+
+        client = new Paho.MQTT.Client(host, Number(port), clientID);
+
+        client.onConnectionLost = onConnectionLost;
+
+        client.connect({
+            userName: username, password: password,
+            onSuccess: onConnect,
+            onFailure: onFail,
+        });
+    }
+
+    // ------- Status --------------------
+    function onFail() {
+        connected = false
+        console.log("Connecton failed... ", " Reversed: ", reversed, " Speed: ", speed, "Rotation: ", rotation)
+    }
+    function onConnectionLost() {
+        connected = false
+        console.log("Connecton lost... ", " Reversed: ", reversed, " Speed: ", speed, "Rotation: ", rotation)
+    }
+    function onConnect() {
+        connected = true
+        message = new Paho.MQTT.Message(message);
+        message.destinationName = topic;
+        client.send(message);
+        console.log("sent")
+    }
+
+    // ------- Sätt värde --------------------
+    function Reverse() {
+        reversed = !reversed
+        if (reversed) {
+            document.getElementById("reverseText").innerHTML = "Forward"
+            reversedT = "1"
+        }
+        else {
+            document.getElementById("reverseText").innerHTML = "Reverse"
+            reversedT = "0"
+        }
+        publish()
+    }
+    function setSpeed(value) {
+        speed = "0".repeat(4 - value.toString().length) + value.toString()
+        publish()
+    }
+    function setRotation(value) {
+        rotation = "0".repeat(3 - value.toString().length) + value.toString()
+        publish()
+
+    }
+
+
+
+
+
+</script>
+
+</html>
+
+<style>
+    body {
+        background-color: #333333;
+        color: #fafafa;
+        font-family: verdana;
+        text-align: center;
+    }
+
+    p {
+        background-color: #b33f3f;
+        width: 100px;
+        height: 40px;
+        border: black;
+        border-width: 10px;
+        border-radius: 5px;
+    }
+
+    .p:hover {
+        opacity: 1;
+    }
+
+    .slidecontainer {
+        width: 300px;
+    }
+
+    .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 15px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 0.7;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+    }
+
+    .slider:hover {
+        opacity: 1;
+    }
+
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: #c44545;
+        cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: #bd4343;
+        cursor: pointer;
+    }
+</style>
