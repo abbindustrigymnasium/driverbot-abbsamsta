@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+
+<script src="https://cdn.jsdelivr.net/alasql/0.3/alasql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.12/xlsx.core.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.12/xlsx.core.min.js"></script> -->
+
+<head>
+    <title>Convert Wireshark to Excel</title>
+</head>
+
+<body>
+
+    <h1>Convert Wireshark to Excel</h1>
+    <p>Choose PDML file</p>
+    <input type="file" id="wsFile" name="wsFile"><br>
+    <button onclick="saveFile()">Save XLSX file</button>
+
+    <br>
+    <p id="statusCheck"></p>
+    <br>
+    <p>http.file_data ></p>
+    <p id="amountA"></p>
+    <br>
+    <p>CstInfos</p>
+    <p id="amountC"></p>
+    <br>
+    <p>Models</p>
+    <p id="Models"></p>
+
+    <div id="colums">
+        <div class="perColum" id="VehicleModel">VehicleModel</div>
+        <div class="perColum" id="BlockId">BlockId</div>
+        <div class="perColum" id="CurrentStationID">CurrentStationID</div>
+        <div class="perColum" id="DestinationStationID">DestinationStationID</div>
+        <div class="perColum" id="DistanceToNextStationM">DistanceToNextStationM</div>
+        <div class="perColum" id="DoorOpen">DoorOpen</div>
+        <div class="perColum" id="DoorsClosed">DoorsClosed</div>
+        <div class="perColum" id="DrivingDirection">DrivingDirection</div>
+        <div class="perColum" id="NextStationID">NextStationID</div>
+        <div class="perColum" id="LastUpdated">LastUpdated</div>
+        <div class="perColum" id="MaxNumberOfStreams">MaxNumberOfStreams</div>
+    </div>
+
+</body>
+<script>
+    stationNames = ["Slussen", "Gamla stan", "T-Centralen", "Hötorget", "Rådmansgatan", "Odenplan", "S:t Eriksplan",
+        "Fridhemsplan", "Thorildsplan", "Kristineberg", "Alvik", "Stora mossen", "Abrahamsberg", "Brommaplan",
+        "Åkeshov", "Ängbyplan", "Islandstorget", "Blackeberg", "Råcksta", "Vällingby", "Johannelund",
+        "Hässelby gård", "Hässelby strand", "Medborgarplatsen", "Skanstull", "Gullmarsplan", "Skärmarbrink",
+        "Globen", "Enskede gård", "Sockenplan", "Svedmyra", "Stureby", "Bandhagen", "Högdalen", "Rågsved",
+        "Hagsätra", "Blåsut", "Sandsborg", "Skogskyrkogården", "Tallkrogen", "Gubbängen", "Hökarängen", "Farsta",
+        "Farsta strand", "Hammarbyhöjden", "Björkhagen", "Kärrtorp", "Bagarmossen", "Skarpnäck",
+        "Östermalmstorg", "Karlaplan", "Gärdet", "Ropsten", "Stadion", "Tekniska högskolan", "Universitetet",
+        "Bergshamra", "Danderyds sjukhus", "Mörby centrum", "Mariatorget", "Zinkensdamm", "Hornstull",
+        "Liljeholmen", "Aspudden", "Örnsberg", "Axelsberg", "Mälarhöjden", "Bredäng", "Sätra", "Skärholmen",
+        "Vårberg", "Vårby gård", "Masmo", "Fittja", "Alby", "Hallunda", "Norsborg", "Midsommarkransen",
+        "Telefonplan", "Hägerstensåsen", "Västertorp", "Fruängen", "Kungsträdgården", "Rådhuset", "Stadshagen",
+        "Västra skogen", "Solna centrum", "Näckrosen", "Hallonbergen", "Kymlinge norrut", "Kista", "Husby",
+        "Akalla", "Huvudsta", "Solna strand", "Sundbybergs centrum", "Duvbo", "Rissne", "Rinkeby", "Tensta",
+        "Hjulsta",
+    ]
+    stationNumber = ["1011", "1021", "1051", "1111", "1121", "1131", "1141", "1151", "1161", "1171", "1201", "1211",
+        "1221", "1231", "1241", "1251", "1261", "1271", "1281", "1301", "1311", "1321", "1331", "1511", "1521",
+        "1551", "1601", "1611", "1621", "1631", "1641", "1651", "1661", "1701", "1711", "1721", "1811", "1821",
+        "1831", "1841", "1851", "1861", "1871", "1881", "1911", "1921", "1931", "1941", "1951", "2101",
+        "2111", "2121", "2131", "2211", "2221", "2231", "2241", "2251", "2301", "2511", "2521", "2531", "2601",
+        "2611", "2621", "2631", "2641", "2651", "2701", "2711", "2721", "2731", "2741", "2751", "2761", "2771",
+        "2781", "2811", "2821", "2831", "2841", "2851", "3031", "3131", "3161", "3201", "3211", "3221", "3231",
+        "3241", "3251", "3261", "3271", "3411", "3421", "3431", "3441", "3451", "3461", "3471", "3481"
+    ]
+
+    var wsFile = document.getElementById('wsFile');
+
+    // ------ get infos funktioner --------------
+    function GetStationName(x) {
+        a = ""
+        for (index, station in enumerate(stationNumber, start = 0)) {
+            chars = []
+            for (char in x) {
+                chars.append(char)
+            }
+
+            stationID = ""
+            try {
+                stationID = chars[-4] + chars[-3] + chars[-2] + chars[-1]
+            }
+
+            if (station == stationID) {
+                x = stationNames[index]
+
+            }
+        }
+        return x
+    }
+
+    function VehicleModel(x) {
+        x = x.split("VehicleModel")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function BlockId(x) {
+        x = x.split("BlockId")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function CurrentStationID(x) {
+        x = x.split("CurrentStation")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function DestinationStationID(x) {
+        x = x.split("DestinationStation")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function DistanceToNextStationM(x) {
+        x = x.split("DistanceToNextStationM")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function DoorOpen(x) {
+        x = x.split("DoorOpen")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function DoorsClosed(x) {
+        x = x.split("DoorsClosed")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function DrivingDirection(x) {
+        x = x.split("DrivingDirection")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function NextStationID(x) {
+        x = x.replace("DistanceToNextStationM", "")
+        x = x.split("NextStation")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function LastUpdated(x) {
+        x = x.split("LastUpdated")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function MaxNumberOfStreams(x) {
+        x = x.split("MaxNumberOfStreams")
+        x = x[1].replace(">", "").replace("</", "")
+        return x
+    }
+
+    function rawPacket(x) {
+        x = x.split("<CstInfos>")
+        x = x[1].split("</CstInfos>")
+        x = x[0].replace("</CstInfo>", "")
+        x = x.split("<CstInfo>")
+        x.shift()
+        return x
+    }
+
+    // ------ get data from file --------------
+    function parseTextAsXml(text) {
+        document.getElementById("statusCheck").innerHTML = "Parsing file..."
+
+        var parser = new DOMParser(),
+            xmlDoc = parser.parseFromString(text, "text/xml");
+
+        document.getElementById("statusCheck").innerHTML = "Almost done!"
+
+        allFields = xmlDoc.getElementsByTagName('field');
+        var i
+        for (i = 0; i < allFields.length; i++) {
+            if (allFields[i].getAttribute("name") == "http.file_data") {
+                document.getElementById("amountA").innerHTML += 1
+                document.getElementById("amountC").innerHTML += rawPacket(allFields[i].getAttribute("show")).length
+                allInfos = rawPacket(allFields[i].getAttribute("show"))
+                let ii
+                for (ii = 0; ii < allInfos.length; ii++) {
+                    // document.getElementById("VehicleModel").innerHTML += VehicleModel(allInfos[ii]) + " "
+                    // document.getElementById("BlockId").innerHTML += BlockId(allInfos[ii]) + " "
+                    document.getElementById("BlockId").innerHTML += BlockId(allInfos[ii]) + " "
+                }
+            }
+        }
+        document.getElementById("statusCheck").innerHTML = "Done!"
+    }
+
+    // ------ at chosen file --------------
+    function waitForTextReadComplete(reader) {
+        document.getElementById("statusCheck").innerHTML = "Reading file..."
+        reader.onloadend = function (event) {
+            var text = event.target.result;
+            parseTextAsXml(text);
+        }
+    }
+
+    function handleFileSelection() {
+        document.getElementById("statusCheck").innerHTML = "Loading file..."
+        var file = wsFile.files[0],
+            reader = new FileReader();
+        waitForTextReadComplete(reader);
+        reader.readAsText(file);
+    }
+    wsFile.addEventListener('change', handleFileSelection, false);
+
+
+    // ------ save file --------------
+    window.saveFile = function saveFile() {
+        var sheet_1_data = [{
+            Col_One: 1,
+            Col_Two: 11
+        }, {
+            Col_One: 2,
+            Col_Two: 22
+        }];
+        var sheet_2_data = [{
+            Col_One: 10,
+            Col_Two: 110
+        }, {
+            Col_One: 20,
+            Col_Two: 220
+        }];
+        var opts = [{
+            sheetid: 'Sheet One',
+            header: true
+        }, {
+            sheetid: 'Sheet Two',
+            header: false
+        }];
+        var result = alasql('SELECT * INTO XLSX("sample_file.xlsx",?) FROM ?',
+            [opts, [sheet_1_data, sheet_2_data]]);
+    }
+</script>
+
+</html>
+
+<style>
+    body {
+        background-color: #333333;
+        color: #fafafa;
+        font-family: verdana;
+        text-align: center;
+    }
+
+    input {
+        color: #fafafa;
+    }
+
+    h1 {
+        color: #fafafa;
+    }
+
+    p {
+        font-size: 20px;
+    }
+
+    #colums {
+        width: 100%;
+        height: 50px;
+        background-color: #5a5a5a;
+    }
+
+    .perColum {
+        display: inline-block;
+        height: 100%;
+        border-right: 1px solid #949494;
+        border-left: 1px solid #949494;
+    }
+</style>
