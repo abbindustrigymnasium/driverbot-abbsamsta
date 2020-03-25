@@ -18,69 +18,88 @@
 
     <br>
     <p id="statusCheck"></p>
-    <br>
     <div id="progress_bar">
         <div class="percent">
             0%
         </div>
     </div>
-    <br>
-    <!-- <p id="AmountPackets">-</p>
-    <br>
-    <p id="AmountFields">-</p>
-    <br>
-    <p id="AmountCstInfos">-</p> -->
-    <div id=myTable></div>
+    <div id="tableSelect"></div>
+    <div id="myTable"></div>
 
 
 
 </body>
 <script>
+    var ws_dataTable = []
+
     function CreateTable() {
-        var myTable = '<table style="width:100%"'
-        var rows = 4;
-        var cols = 10;
+        for (var t = 0; t < ws_data.length; t++) {
 
-        myTable += '<tr>';
-        myTable +=
-            '<th>Frame Number</th>' +
-            '<th>Frame Arrival</th>' +
-            '<th>CstLabel</th>' +
-            '<th>CstLabels</th>' +
-            '<th>Vehicle Model</th>' +
-            '<th>CarTypes</th>' +
-            '<th>BlockId</th>' +
-            '<th>Driving Direction</th>' +
-            '<th>Current StationID</th>' +
-            '<th>Current Station</th>' +
-            '<th>Next Station</th>' +
-            '<th>Next StationID</th>' +
-            '<th>Distance To Next StationM</th>' +
-            '<th>Destination Station</th>' +
-            '<th>Destination StationID</th>' +
-            '<th>Door Open </th>' +
-            '<th>Doors Closed </th>' +
-            '<th>Has Changed </th>' +
-            '<th>Last Updated </th>' +
-            '<th>Max Number Of Streams </th>'
-        myTable += '</tr>';
+            var myTable = '<table style="width:100%" id="' + CstLabelList[t] + '"'
+            myTable += '<thead><tr>';
+            myTable +=
+                '<th>Frame Number</th>' +
+                '<th>Frame Arrival</th>' +
+                '<th>CstLabel</th>' +
+                '<th>CstLabels</th>' +
+                '<th>Vehicle Model</th>' +
+                '<th>CarTypes</th>' +
+                '<th>BlockId</th>' +
+                '<th>Driving Direction</th>' +
+                '<th colspan="2">Current Station</th>' +
+                '<th colspan="2">Next Station</th>' +
+                '<th>Distance To Next StationM</th>' +
+                '<th colspan="2">Destination Station</th>' +
+                '<th>Door Open </th>' +
+                '<th>Doors Closed </th>' +
+                '<th>Has Changed </th>' +
+                '<th>Last Updated </th>' +
+                '<th>Max Number Of Streams </th>'
+            myTable += '</tr></thead>';
+            myTable += '<tbody>'
+            for (var r = 0; r < ws_data[t].length; r++) {
+                myTable += '<tr>';
 
-        console.log(ws_data)
-        console.log(ws_data.length)
-        console.log(ws_data)
-        console.log(ws_data[1])
-
-        for (var r = 0; r < ws_data.length; r++) {
-            myTable += '<tr>';
-
-            for (var c = 0; c < ws_data[r].length; c++) {
-                myTable += '<td>' + ws_data[r][c] + '</td>';
+                for (var c = 0; c < ws_data[t][r].length; c++) {
+                    myTable += '<td>' + ws_data[t][r][c] + '</td>';
+                }
+                myTable += '</tr>';
             }
-            myTable += '</tr>';
-        }
-        myTable += '</table>'
+            myTable += '</tbody></table>'
 
-        document.getElementById('myTable').innerHTML = myTable
+            ws_dataTable.push([myTable, CstLabelList[t]])
+            console.log(ws_dataTable)
+
+        }
+        tableSel = '<ul id="tableSelectBox">'
+        ws_dataTable.forEach(table => {
+            if (table[1] != "undefined") {
+
+                tableSel += '<li><a id="' + table[1] + '"' + 'onclick="switchTable(' + table[1] + ')"' + '>' +
+                    table[1] + '</a></li>'
+            }
+
+        });
+        tableSel += '</ul>'
+        document.getElementById('tableSelect').innerHTML = tableSel
+
+
+    }
+
+    function switchTable(x) {
+        ws_dataTable.forEach(table => {
+            if (table[1] == x) {
+
+                document.getElementById('myTable').innerHTML = table[0]
+            }
+        });
+        $(document).ready(function () {
+            $("td:contains(true)").css("background-color", "#c1f5c1");
+        });
+        $(document).ready(function () {
+            $("td:contains(false)").css("background-color", "#f5c4c4");
+        });
+
     }
 
 
@@ -111,12 +130,30 @@
     ]
 
     var wsFile = document.getElementById('wsFile');
-    var ws_data = []
+    var ws_data = [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+    ]
+    var CstLabelList = []
 
 
     // ------ get infos funktioner --------------
     function GetStationName(x) {
-        stationID = "" + x.charAt(-4) + x.charAt(-3) + x.charAt(-2) + x.charAt(-1)
+        stationID = x.substring(x.length - 4)
+        x = ""
 
         stationNumber.forEach((station, index) => {
             if (station == stationID) {
@@ -155,11 +192,12 @@
         x = x.split("CarTypes")
         x = x[1].replace("</b:string>", "").split("<b:string>")
         x.shift()
+        x.split
         cars = ""
         x.forEach(car => {
-            cars = cars + car.replace("</", "") + ""
+            cars += car.split("</")[0] + " "
         });
-        return x
+        return cars
     }
 
     function BlockId(x) {
@@ -189,16 +227,16 @@
 
     function NextStation(x) {
         x = x.replace("DistanceToNextStationM", "")
-        x = x.split("NextStation")
-        x = x[1].replace(">", "").replace("</", "")
+        x = x.split("<NextStation>")[1]
+        x = x.split("</NextStation>")[0]
         x = GetStationName(x)
         return x
     }
 
     function NextStationID(x) {
         x = x.replace("DistanceToNextStationM", "")
-        x = x.split("NextStation")
-        x = x[1].replace(">", "").replace("</", "")
+        x = x.split("<NextStation>")[1]
+        x = x.split("</NextStation>")[0]
         return x
     }
 
@@ -242,6 +280,7 @@
     function LastUpdated(x) {
         x = x.split("LastUpdated")
         x = x[1].replace(">", "").replace("</", "")
+        x = x.split("T")[1]
         return x
     }
 
@@ -261,9 +300,6 @@
     }
 
     // ------ get data from file --------------
-    // function parseTextAsXml(text) {
-
-    // }
 
     var reader;
     var progress = document.querySelector('.percent');
@@ -340,10 +376,9 @@
                 AmountPackets += 1
                 allFields = packet.getElementsByTagName('field');
 
-                packetNumber = packet.getElementsByTagName('field')[0].getAttribute("show")
-                packetArrival = packet.getElementsByTagName('field')[3].getAttribute("show");
-
-
+                packetNumber = packet.getElementsByTagName('field')[0].getAttribute("show");
+                packetArrival = packet.getElementsByTagName('field')[3].getAttribute("show").replace(
+                    'Västeuropa, normaltid', '');
 
                 Array.from(allFields).forEach((field, indexField) => {
                     AmountFields += 1
@@ -351,30 +386,42 @@
                     if (field.getAttribute("name") == "http.file_data") {
                         allInfos = rawPacket(field.getAttribute("show"))
                         Array.from(allInfos).forEach((infos, indexInfo) => {
+                            if (!CstLabelList.includes(CstLabel(infos))) {
+                                CstLabelList.push(CstLabel(infos))
+                            }
 
 
-                            ws_data[AmountCstInfos] = [
-                                packetNumber,
-                                packetArrival,
-                                CstLabel(infos),
-                                CstLabels(infos),
-                                VehicleModel(infos),
-                                CarTypes(infos),
-                                BlockId(infos),
-                                DrivingDirection(infos),
-                                CurrentStationID(infos),
-                                CurrentStation(infos),
-                                NextStation(infos),
-                                NextStationID(infos),
-                                DistanceToNextStationM(infos),
-                                DestinationStation(infos),
-                                DestinationStationID(infos),
-                                DoorOpen(infos),
-                                DoorsClosed(infos),
-                                HasChanged(infos),
-                                LastUpdated(infos),
-                                MaxNumberOfStreams(infos),
-                            ]
+                            CstLabelList.forEach((listItem, listIndex) => {
+                                if (CstLabel(infos) == listItem) {
+
+
+                                    ws_data[listIndex][ws_data[listIndex]
+                                        .length
+                                    ] = [
+                                        packetNumber,
+                                        packetArrival,
+                                        CstLabel(infos),
+                                        CstLabels(infos),
+                                        VehicleModel(infos),
+                                        CarTypes(infos),
+                                        BlockId(infos),
+                                        DrivingDirection(infos),
+                                        CurrentStationID(infos),
+                                        CurrentStation(infos),
+                                        NextStation(infos),
+                                        NextStationID(infos),
+                                        DistanceToNextStationM(infos),
+                                        DestinationStation(infos),
+                                        DestinationStationID(infos),
+                                        DoorOpen(infos),
+                                        DoorsClosed(infos),
+                                        HasChanged(infos),
+                                        LastUpdated(infos),
+                                        MaxNumberOfStreams(infos),
+                                    ]
+                                }
+                            });
+
                             AmountCstInfos += 1
                         });
                     }
@@ -382,49 +429,20 @@
                 });
 
             });
-
-            // Ensure that the progress bar displays 100% at the end.
-            //console.log(ws_data)
+            console.log(ws_data)
+            console.log(CstLabelList)
             CreateTable()
-            // document.getElementById("AmountPackets").innerHTML = AmountPackets
-            // document.getElementById("AmountFields").innerHTML = AmountFields
-            // document.getElementById("AmountCstInfos").innerHTML = AmountCstInfos
+
             document.getElementById("statusCheck").innerHTML = "Done!"
             progress.style.width = '100%';
             progress.textContent = '100%';
             setTimeout("document.getElementById('progress_bar').className='';", 2000);
         }
-
-        // reader.onloadend = function (event) {
-
-        // }
         reader.readAsText(file);
-        // Read in the image file as a binary string.
-        //reader.readAsDataURL(evt.target.files[0]);
     }
-
-
-    // ------ at chosen file --------------
-    // function waitForTextReadComplete(reader) {
-    //     document.getElementById("statusCheck").innerHTML = "Reading file..."
-    //     reader.onloadend = function (event) {
-    //         var text = event.target.result;
-    //         parseTextAsXml(text);
-    //     }
-    // }
-
-    // function handleFileSelection() {
-    //     document.getElementById("statusCheck").innerHTML = "Loading file..."
-    //     var file = wsFile.files[0],
-    //         reader = new FileReader();
-    //     waitForTextReadComplete(reader);
-    //     reader.readAsText(file);
-    // }
     wsFile.addEventListener('change', handleFileSelection, false);
 
-
     // ------ save file --------------
-
 
     function s2ab(s) {
         var buf = new ArrayBuffer(s.length);
@@ -458,18 +476,18 @@
 
 <style>
     body {
-        background-color: #333333;
-        color: #fafafa;
+        background-color: #ffffff;
+        color: #333333;
         font-family: verdana;
         text-align: center;
     }
 
     input {
-        color: #fafafa;
+        color: #333333;
     }
 
     h1 {
-        color: #fafafa;
+        color: #333333;
     }
 
     p {
@@ -479,9 +497,22 @@
     table,
     th,
     td {
-        border: 1px solid #949494;
+        color: #000000;
+        border: 1px solid #b8b8b8;
         border-collapse: collapse;
+        text-align: center;
     }
+
+    th {
+        background-color: #cacaca;
+        border: 1px solid #383838;
+    }
+
+    td {
+        background-color: #ffffff;
+        border: 1px solid #b4b4b4;
+    }
+
 
     #progress_bar {
         margin: 10px 0;
@@ -503,5 +534,29 @@
         background-color: #99ccff;
         height: auto;
         width: 0;
+    }
+
+    ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #333;
+    }
+
+    li {
+        float: left;
+    }
+
+    li a {
+        display: block;
+        color: white;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+    }
+
+    li a:hover {
+        background-color: #111;
     }
 </style>
