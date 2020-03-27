@@ -21,3 +21,6 @@ Efter att jag gjort den sista printen under söndagskvällen så kunde jag fixa 
 
 ### Tisdag - 24/3
 Idag har jag gjort de uppgifter som presenterdes i ellära intro.mp4. Under resten av dagen jobbade jag med wireshark programmet. Jag kom väldigt långt och är nästan klar med något jag trodde skulle ta mycket längre tid.
+
+### Fredag - 27/3
+Idag har jag fortsatt utveckla hemsidan inom python projektet och även skaffat en domän till den. https://wireshark2excel.now.sh/
