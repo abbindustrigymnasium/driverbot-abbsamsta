@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"
+        type="text/javascript"></script>
+        
+        <script
+        src="https://code.jquery.com/jquery-3.5.0.min.js"
+        integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ="
+        crossorigin="anonymous"></script>
+    <title>VibeMotor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Cabin' rel='stylesheet'>
+</head>
+
+<body>
+
+    <div class="grid-container"> 
+      <div class="item1">Speed</div>
+      <div class="item2">Direction</div>
+      <div class="item3">   <div class="button" value="false" id="btn-reverse" >REVERSE</div></div>
+      <div class="item4">   <input type="range" class="slider" min="50" step="5" max="130" value="90" id="slider-dir"  /></div>
+      <div class="item5">   <input type="range" class="slider" min="590" step="5" max="1023" value="0" id="slider-speed" /></div>
+      <div class="item6">   <div class="button" id="btn-handbreak" >HANDBREAK</div></div>
+    </div>
+
+</body>
+
+<script>
+
+    clientID = "clientID_" + parseInt(Math.random() * 100);
+    host = "maqiatto.com"
+    port = 8883
+    username = "samuel.staflin@abbindustrigymnasium.se"
+    password = "Samuel0303"
+    topic = "samuel.staflin@abbindustrigymnasium.se/motor";
+
+    var dir = "090"
+    var speed = "0000"
+    var reverse = "1"
+    var connected = false
+
+        // ------- Connect --------------------
+    function publish() {
+        message = reverse + speed + dir
+        console.log("Message: ", message)
+
+        client = new Paho.MQTT.Client(host, Number(port), clientID);
+
+        client.onConnectionLost = onConnectionLost;
+
+        client.connect({
+            userName: username, password: password,
+            onSuccess: onConnect,
+            onFailure: onFail,
+        });
+    }
+
+    // ------- Status --------------------
+    function onFail() {
+        connected = false
+        console.log("Connecton failed... ")
+    }
+    function onConnectionLost() {
+        connected = false
+        console.log("Connecton lost... ")
+    }
+    function onConnect() {
+        connected = true
+        message = new Paho.MQTT.Message(message);
+        message.destinationName = topic;
+        client.send(message);
+        console.log("sent")
+    }
+
+    // ------- Sätt värde --------------------
+    $( "#btn-reverse" ).click(function() {
+      if (reverse != "0") {reverse = "0"; $("#btn-reverse").css("background", "#c9c9c9")}
+      else  {reverse = "1"; $("#btn-reverse").css("background", "#d8d8d8")}     
+      publish()
+    });
+
+    $( "#btn-handbreak" ).click(function() {
+      speed = "0000"
+      dir = "090"
+      reverse = "1"
+      publish()
+    });
+
+    $( "#slider-dir" ).click(function() {
+      dir = "0".repeat(3 - this.value.length) + this.value
+      publish()
+    });
+    $( "#slider-speed" ).click(function() {
+      console.log(this.value)
+      if (this.value == "590" || this.value == "595" || this.value == "600") {speed = "0000"}
+      else {speed = "0".repeat(4 - this.value.length) + this.value}
+      
+      publish()
+    });
+ 
+
+</script>
+
+</html>
+<style>
+    :root {
+        --border: rgba(0, 0, 0, 0.5) solid 2px;
+        --border-radius: 5px;
+        --box-shadow: 0 0 30px rgba(0, 0, 0, 0.39); 
+    }
+
+    body {
+        background-color: #161616;
+        color: #fafafa;
+        font-family: Cabin;
+        text-align: center;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .button {
+        background: #a79393;
+        width: 75%;
+        height: 50%;
+        border: var(--border);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        border-radius: 5px;
+        padding-top: 27px;
+        margin: 10px 20px ;
+        font-size: 17px;
+        transition: background .1s;
+    }
+
+    .button#btn-handbreak {
+      background: #c21010;
+    }
+    .button#btn-reverse {
+      background: #c9c9c9;
+      color: black;
+    }
+    .slider {
+      -webkit-appearance: none;
+      width: 250px; 
+      height: 50px;
+      border: var(--border);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      background: #979797;
+      -webkit-transition: .2s;
+        transition: opacity .2s;
+        transition: background .1s;
+    }
+    .slider:hover {
+      background: #a3a3a3;
+    }
+    .slider#slider-speed {
+      transform: rotate(270deg);
+    }
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 30px;
+        height: 70px;
+        border-radius: 3px;
+        border: 0;
+        background: url('slider-thumb.png');
+        cursor: pointer;
+        box-shadow:  var(--box-shadow);
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: auto auto auto auto auto auto;
+      background-color: rgb(65, 63, 63);
+      padding: 20px;
+      border: var(--border);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+    }
+    .grid-container > div {
+      text-align: center;
+      font-size: 20px;
+
+    }
+    .item1 {
+      grid-column: 4 / 7;
+      height: 30px;
+    }    
+    .item2 { 
+      grid-column: 1 / 3;
+      padding-top: 70px;
+      margin-left: 80px;
+      width: 90px;
+    }    
+    .item3 {
+      grid-column: 3 / 5;
+      height: 95px;
+      width: 130px;
+      margin-left: 20px;
+    }    
+    .item4 {
+      grid-column: 1 / 4;
+      height: 65px;
+      padding-top: 9px;
+    }    
+    .item5 {
+      grid-column: 4 / 7;
+    }    
+    .item6 {
+      grid-column: 3 / 5;
+      height: 100px;
+      width: 170px;
+    }
+</style>
