@@ -22,7 +22,7 @@
       <div class="item3">   <div class="button" value="false" id="btn-reverse" >REVERSE</div></div>
       <div class="item4">   <input type="range" class="slider" min="50" step="5" max="130" value="90" id="slider-dir"  /></div>
       <div class="item5">   <input type="range" class="slider" min="590" step="5" max="1023" value="0" id="slider-speed" /></div>
-      <div class="item6">   <div class="button" id="btn-handbreak" >HANDBREAK</div></div>
+      <div class="item6">   <div class="button" id="btn-handbreak" >HANDBRAKE</div></div>
     </div>
 
 </body>
@@ -76,8 +76,8 @@
 
     // ------- Sätt värde --------------------
     $( "#btn-reverse" ).click(function() {
-      if (reverse != "0") {reverse = "0"; $("#btn-reverse").css("background", "#d8d8d8")}
-      else  {reverse = "1"; $("#btn-reverse").css("background", "#c9c9c9")}     
+      if (reverse != "0") {reverse = "0"; $("#btn-reverse").css("background", "#999999")}
+      else  {reverse = "1"; $("#btn-reverse").css("background", "#d8d8d8")}     
       publish()
     });
 
@@ -85,6 +85,9 @@
       speed = "0000"
       dir = "090"
       reverse = "1"
+      $( "#btn-dir" ).val(90)
+      $( "#btn-speed" ).val(0)
+      $("#btn-reverse").css("background", "#d8d8d8")
       publish()
     });
 
@@ -139,7 +142,7 @@
       background: #c21010;
     }
     .button#btn-reverse {
-      background: #c9c9c9;
+      background: #999999;
       color: black;
     }
     .slider {
@@ -167,7 +170,7 @@
         height: 70px;
         border-radius: 3px;
         border: 0;
-        background: url('slider-thumb.png');
+        background: url('assests/slider-thumb.png');
         cursor: pointer;
         box-shadow:  var(--box-shadow);
     }
