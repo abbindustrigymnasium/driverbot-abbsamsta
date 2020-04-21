@@ -165,63 +165,16 @@ fileName = input("Filename > ")
 
 # xlsx file maker
 workbook = xlsxwriter.Workbook(fileName + '.xlsx')
-worksheet = workbook.add_worksheet()
-titel_format = workbook.add_format(
-    {'bg_color': '#d9d9d9', 'border': 1, 'text_wrap': 'true', 'bold': 'true'})
-
 
 centrum_format = workbook.add_format({'align': 'center'})
-worksheet.set_column('A:V', None, centrum_format)
-
-
-worksheet.write('A1', 'Frame Number', titel_format)
-worksheet.set_column('A:A', 60/7)
-worksheet.write('B1', 'Frame Arrival', titel_format)
-worksheet.set_column('B:B', 200/7)
-worksheet.write('C1', 'CstLabel', titel_format)
-worksheet.set_column('C:C', 75/7)
-worksheet.write('D1', 'CstLabels', titel_format)
-worksheet.set_column('D:D', 75/7)
-worksheet.write('E1', 'Vehicle Model', titel_format)
-worksheet.set_column('E:E', 50/7)
-worksheet.write('F1', 'CarTypes', titel_format)
-worksheet.set_column('F:F', 180/7)
-worksheet.write('G1', 'BlockId', titel_format)
-worksheet.set_column('G:G', 80/7)
-worksheet.write('H1', 'Driving Direction', titel_format)
-worksheet.set_column('H:H', 65/7)
-worksheet.write('I1', 'Current StationID', titel_format)
-worksheet.set_column('I:I', 80/7)
-worksheet.write('J1', 'Current Station', titel_format)
-worksheet.set_column('J:J', 100/7)
-worksheet.write('K1', 'Next StationID', titel_format)
-worksheet.set_column('K:K', 80/7)
-worksheet.write('L1', 'Next Station', titel_format)
-worksheet.set_column('L:L', 100/7)
-worksheet.write('M1', 'Distance To Next StationM', titel_format)
-worksheet.set_column('M:M', 70/7)
-worksheet.write('N1', 'Destination StationID', titel_format)
-worksheet.set_column('N:N', 80/7)
-worksheet.write('O1', 'Destination Station', titel_format)
-worksheet.set_column('O:O', 100/7)
-worksheet.write('P1', 'Door Open', titel_format)
-worksheet.set_column('P:P', 50/7)
-worksheet.write('Q1', 'Doors Closed', titel_format)
-worksheet.set_column('Q:Q', 50/7)
-worksheet.write('R1', 'Has Changed', titel_format)
-worksheet.set_column('R:R', 60/7)
-worksheet.write('S1', 'Last Updated Date', titel_format)
-worksheet.set_column('S:S', 80/7)
-worksheet.write('T1', 'Last Updated Time', titel_format)
-worksheet.set_column('T:T', 120/7)
-worksheet.write('U1', 'Max Number Of Streams', titel_format)
-worksheet.set_column('U:U', 75/7)
+false_format = workbook.add_format({'bg_color': '#f5c4c4'})
+true_format = workbook.add_format({'bg_color': '#c1f5c1'})
 
 wiresharkFile = fileName + ".pdml"
 root = ET.parse(wiresharkFile).getroot()
 
-row = 1
-col = 0
+CstLabelList = []
+columns = []
 
 for packet in root:
     CstInfo = []
@@ -232,45 +185,128 @@ for packet in root:
         for field in proto:
             if field.attrib['name'] == "http.file_data":
                 for infos in RawPacket(field.attrib['show']):
-                    worksheet.write(row, col+0, packetNumber)
-                    worksheet.write(
-                        row, col+1, packetArrival.strip("Västeuropa, normaltid"))
-                    worksheet.write(row, col+2, CstLabel(infos))
-                    worksheet.write(row, col+3, CstLabels(infos))
-                    worksheet.write(row, col+4, VehicleModel(infos))
-                    worksheet.write(row, col+5, CarTypes(infos))
-                    worksheet.write(row, col+6, BlockId(infos))
-                    worksheet.write(row, col+7, DrivingDirection(infos))
-                    worksheet.write(row, col+8, CurrentStationID(infos))
-                    worksheet.write(row, col+9, CurrentStation(infos))
-                    worksheet.write(row, col+11, NextStationID(infos))
-                    worksheet.write(row, col+10, NextStation(infos))
-                    worksheet.write(row, col+12, DistanceToNextStationM(
-                        infos))
-                    worksheet.write(row, col+14, DestinationStationID(
-                        infos))
-                    worksheet.write(row, col+13, DestinationStation(infos))
-                    worksheet.write(row, col+15, DoorOpen(infos))
-                    worksheet.write(row, col+16, DoorsClosed(infos))
-                    worksheet.write(row, col+17, HasChanged(infos))
-                    worksheet.write(row, col+18, LastUpdatedDate(infos))
-                    worksheet.write(row, col+19, LastUpdatedTime(infos))
-                    worksheet.write(row, col+20, MaxNumberOfStreams(infos))
-                    row += 1
+                    if CstLabel(infos) not in CstLabelList:
+                        CstLabelList.append(CstLabel(infos))
+                        columns.append([])
 
-false_format = workbook.add_format({'bg_color': '#f5c4c4'})
+                    for listIndex, listItem in enumerate(CstLabelList, start=0):
 
-worksheet.conditional_format('P1:R10000', {'type':     'cell',
-                                           'criteria': '==',
-                                           'value':    '"false"',
-                                           'format':   false_format})
-true_format = workbook.add_format({'bg_color': '#c1f5c1'})
-worksheet.conditional_format('P1:R10000', {'type':   'cell',
-                                           'criteria': '==',
-                                           'value':    '"true"',
-                                           'format':   true_format})
+                        if CstLabel(infos) == listItem:
+                            columns[listIndex].append([
+                                packetNumber,
+                                packetArrival.strip("Västeuropa, normaltid"),
+                                CstLabel(infos),
+                                CstLabels(infos),
+                                VehicleModel(infos),
+                                CarTypes(infos),
+                                BlockId(infos),
+                                DrivingDirection(infos),
+                                CurrentStationID(infos),
+                                CurrentStation(infos),
+                                NextStationID(infos),
+                                NextStation(infos),
+                                DistanceToNextStationM(infos),
+                                DestinationStationID(infos),
+                                DestinationStation(infos),
+                                DoorOpen(infos),
+                                DoorsClosed(infos),
+                                HasChanged(infos),
+                                LastUpdatedDate(infos),
+                                LastUpdatedTime(infos),
+                                MaxNumberOfStreams(infos)
+                            ])
 
-worksheet.autofilter('C1')
-worksheet.freeze_panes(1, 0)
+
+for sheetIndex, sheet in enumerate(columns, start=0):
+    try:
+        worksheet = workbook.add_worksheet(sheet[1][2])
+        titel_format = workbook.add_format(
+            {'bg_color': '#d9d9d9', 'border': 1, 'text_wrap': 'true', 'bold': 'true'})
+
+        worksheet.set_column('A:V', None, centrum_format)
+
+        worksheet.write('A1', 'Frame Number', titel_format)
+        worksheet.set_column('A:A', 55/7)
+        worksheet.write('B1', 'Frame Arrival', titel_format)
+        worksheet.set_column('B:B', 200/7)
+        worksheet.write('C1', 'CstLabel', titel_format)
+        worksheet.set_column('C:C', 60/7)
+        worksheet.write('D1', 'CstLabels', titel_format)
+        worksheet.set_column('D:D', 75/7)
+        worksheet.write('E1', 'Vehicle Model', titel_format)
+        worksheet.set_column('E:E', 50/7)
+        worksheet.write('F1', 'CarTypes', titel_format)
+        worksheet.set_column('F:F', 180/7)
+        worksheet.write('G1', 'BlockId', titel_format)
+        worksheet.set_column('G:G', 80/7)
+        worksheet.write('H1', 'Driving Direction', titel_format)
+        worksheet.set_column('H:H', 65/7)
+        worksheet.write('I1', 'Current StationID', titel_format)
+        worksheet.set_column('I:I', 80/7)
+        worksheet.write('J1', 'Current Station', titel_format)
+        worksheet.set_column('J:J', 105/7)
+        worksheet.write('K1', 'Next StationID', titel_format)
+        worksheet.set_column('K:K', 80/7)
+        worksheet.write('L1', 'Next Station', titel_format)
+        worksheet.set_column('L:L', 105/7)
+        worksheet.write('M1', 'Distance To Next StationM', titel_format)
+        worksheet.set_column('M:M', 70/7)
+        worksheet.write('N1', 'Destination StationID', titel_format)
+        worksheet.set_column('N:N', 80/7)
+        worksheet.write('O1', 'Destination Station', titel_format)
+        worksheet.set_column('O:O', 105/7)
+        worksheet.write('P1', 'Door Open', titel_format)
+        worksheet.set_column('P:P', 40/7)
+        worksheet.write('Q1', 'Doors Closed', titel_format)
+        worksheet.set_column('Q:Q', 43/7)
+        worksheet.write('R1', 'Has Changed', titel_format)
+        worksheet.set_column('R:R', 56/7)
+        worksheet.write('S1', 'Last Updated Date', titel_format)
+        worksheet.set_column('S:S', 70/7)
+        worksheet.write('T1', 'Last Updated Time', titel_format)
+        worksheet.set_column('T:T', 120/7)
+        worksheet.write('U1', 'Max Number Of Streams', titel_format)
+        worksheet.set_column('U:U', 72/7)
+
+        row = 1
+        col = 0
+        for rows in sheet:
+            worksheet.write(row, col+0, rows[0])
+            worksheet.write(row, col+1, rows[1])
+            worksheet.write(row, col+2, rows[2])
+            worksheet.write(row, col+3, rows[3])
+            worksheet.write(row, col+4, rows[4])
+            worksheet.write(row, col+5, rows[5])
+            worksheet.write(row, col+6, rows[6])
+            worksheet.write(row, col+7, rows[7])
+            worksheet.write(row, col+8, rows[8])
+            worksheet.write(row, col+9, rows[9])
+            worksheet.write(row, col+10, rows[10])
+            worksheet.write(row, col+11, rows[11])
+            worksheet.write(row, col+12, rows[12])
+            worksheet.write(row, col+13, rows[13])
+            worksheet.write(row, col+14, rows[14])
+            worksheet.write(row, col+15, rows[15])
+            worksheet.write(row, col+16, rows[16])
+            worksheet.write(row, col+17, rows[17])
+            worksheet.write(row, col+18, rows[18])
+            worksheet.write(row, col+19, rows[19])
+            worksheet.write(row, col+20, rows[20])
+            row += 1
+
+        worksheet.conditional_format('P1:R10000', {'type':     'cell',
+                                                   'criteria': '==',
+                                                   'value':    '"false"',
+                                                   'format':   false_format})
+
+        worksheet.conditional_format('P1:R10000', {'type':   'cell',
+                                                   'criteria': '==',
+                                                   'value':    '"true"',
+                                                   'format':   true_format})
+
+        worksheet.freeze_panes(1, 0)
+
+    except:
+        pass
 
 workbook.close()
