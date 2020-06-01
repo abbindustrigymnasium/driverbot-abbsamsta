@@ -48,13 +48,15 @@
 
 <script>
 
-    clientID = "clientID_" + parseInt(Math.random() * 100);
-    host = "maqiatto.com"
-    port = 8883
-    username = "samuel.staflin@abbindustrigymnasium.se"
-    password = "Samuel0303"
-    topic = "samuel.staflin@abbindustrigymnasium.se/motor";
+    // ------- MQTT info --------------------
+    clientID = "clientID_" + parseInt(Math.random() * 100);     // Random client ID
+    host = "maqiatto.com"                                       // Host site
+    port = 8883                                                 // Port
+    username = "samuel.staflin@abbindustrigymnasium.se"         // Username on host site
+    password = "Samuel0303"                                     // Password on host site
+    topic = "samuel.staflin@abbindustrigymnasium.se/motor";     // Topic to export updates
 
+    // ------- Define variables --------------------
     var dir = "090"
     var speed = "0000"
     var reverse = "1"
@@ -62,74 +64,77 @@
 
     // ------- Connect --------------------
     function publish() {
-        message = reverse + speed + dir
+        message = reverse + speed + dir      // Create message
         console.log("Message: ", message)
 
-        client = new Paho.MQTT.Client(host, Number(port), clientID);
+        client = new Paho.MQTT.Client(host, Number(port), clientID);    // Define client
 
-        client.onConnectionLost = onConnectionLost;
+        client.onConnectionLost = onConnectionLost;     // When connection lost -> reconnect
 
-        client.connect({
-            userName: username, password: password,
-            onSuccess: onConnect,
-            onFailure: onFail,
+        client.connect({                                // Try to connect
+            userName: username, password: password,     // User information
+            onSuccess: onConnect,                       // If connection success -> send message to topic
+            onFailure: onFail,                          // If fail -> mention in console
         });
     }
 
     // ------- Status --------------------
-    function onFail() {
+    function onFail() {     // What to do when connection failed
         connected = false
         console.log("Connecton failed... ")
     }
-    function onConnectionLost() {
+    function onConnectionLost() {   // When disconnected
         connected = false
         console.log("Connecton lost... ")
     }
-    function onConnect() {
-        connected = true
-        message = new Paho.MQTT.Message(message);
-        message.destinationName = topic;
-        client.send(message);
+    function onConnect() { // When connected
+        connected = true    
+        message = new Paho.MQTT.Message(message);   // Compile message
+        message.destinationName = topic;            // Set destination topic
+        client.send(message);                       // Send message
         console.log("sent")
     }
 
     // ------- Sätt värde --------------------
 
-    $('#btn-reverse').click(function() {
-        if (reverse != "0") {reverse = "0"; $("#btn-reverse").css("background", "#777777")}
-        else  {reverse = "1"; $("#btn-reverse").css("background", "#aaaaaa")}     
-        publish()
+    $('#btn-reverse').click(function() { // When reverse button pressed
+        if (reverse != "0") {reverse = "0"; $("#btn-reverse").css("background", "#777777")} // reversed : darker button : value=0
+        else  {reverse = "1"; $("#btn-reverse").css("background", "#aaaaaa")}               // forward : lighter button : value=1
+        publish() // Publish updated reverse value
     })
 
-    $('#btn-handbrake').click(function() {
-        speed = "0000"
+    $('#btn-handbrake').click(function() { // When red button pressed - handbrake car - reset website
+        speed = "0000"  
         dir = "090"
         reverse = "1"
         $('#slider-dir').val(90)
         $('#slider-speed').val(0)
         $('#meter-dir').css('transform', 'rotate(0deg)')
-        $('#meter-speed').css('transform', 'rotate(270deg)')
+        $('#meter-speed').css('transform', 'rotate(-90deg)')
         $("#btn-reverse").css("background", "#aaaaaa")
         publish()
     });
 
-    $("#slider-dir").on('input', function () {
-        dir = "0".repeat(3 - this.value.length) + this.value
-        let deg = (this.value - 90) * 2
+    $("#slider-dir").on('input', function () { // Live update direction-meter and direction value
+        dir = "0".repeat(3 - this.value.length) + this.value        // Three digit value
+        let deg = (this.value - 90) * 2                             // Convert to degrees of direction-meter
 
-        $('#meter-dir').css('transform', 'rotate(' + deg + 'deg)')
+        $('#meter-dir').css('transform', 'rotate(' + deg + 'deg)')  // Rotate direction-meter
     });
 
-    $("#slider-speed").on('input',function () {
-        let deg
-        if (this.value <= 600) { speed = "0000"; deg = 0 }
-        else { speed = "0".repeat(4 - this.value.length) + this.value; deg = (this.value - 590) / 3 }
-        deg -= 90
+    $("#slider-speed").on('input',function () { // Live update speedometer and speed value
+        let deg                                                                                         
+        if (this.value <= 600) { speed = "0000"; deg = 0 }          // If value too low
+        else { 
+            speed = "0".repeat(4 - this.value.length) + this.value; // Four digit speed value
+            deg = (this.value - 590) / 3 }                          // Convert to degrees of speedometer
 
-        $('#meter-speed').css('transform', 'rotate(' + deg + 'deg)')
+        deg -= 90 // Fix angle
+
+        $('#meter-speed').css('transform', 'rotate(' + deg + 'deg)')    // Rotate direction-meter
     });
 
-    $('.slider').change(publish);
+    $('.slider').change(publish); // Publish at every slider change
 
 
 </script>

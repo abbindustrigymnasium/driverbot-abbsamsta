@@ -1,45 +1,45 @@
 #include <Servo.h>
-#define motorPinDir  0//D2
-#define motorPinSpeed 5//D1
+#define motorPinDir 0   //D2
+#define motorPinSpeed 5 //D1
 #include "EspMQTTClient.h"
 #include "PubSubClient.h"
 
+// ---- Defines variables---
 Servo servo;
 String Sub = "samuel.staflin@abbindustrigymnasium.se/motor";
 int speedValue = 0;
 int dirValue = 0;
 int rotateValue = 0;
 
+// ------ MQTT Connect --------
 void onConnectionEstablished();
 
-// Deepspace
-// HeSaFe720304!1
-
-// Hollywood
-// 05080508
-
 EspMQTTClient client(
-  "Hollywood",                       // Wifi ssid
-  "05070507",                            // Wifi password
-  "maqiatto.com",                           // MQTT broker ip
-  1883,                                     // MQTT broker port
-  "samuel.staflin@abbindustrigymnasium.se",       // MQTT username
-  "Samuel0303",                             // MQTT password
-  "enheteeeen",   // Client name
-  onConnectionEstablished,                  // Connection established callback
-  true,                                     // Enable web updater
-  true                                      // Enable debug messages
+    "Hollywood",                              // Wifi ssid
+    "05070507",                               // Wifi password
+    "maqiatto.com",                           // MQTT broker ip
+    1883,                                     // MQTT broker port
+    "samuel.staflin@abbindustrigymnasium.se", // MQTT username
+    "Samuel0303",                             // MQTT password
+    "enheteeeen",                             // Client name
+    onConnectionEstablished,                  // Connection established callback
+    true,                                     // Enable web updater
+    true                                      // Enable debug messages
 );
 
-void onConnectionEstablished() {
-  client.subscribe(Sub, [] (const String & payload) {
-    dirValue = payload.substring(0, 1).toInt() ;
-    speedValue = payload.substring(1, 5).toInt();
-    rotateValue = payload.substring(5, 8).toInt();
+// ------ When client connected -------
+void onConnectionEstablished()
+{
+  client.subscribe(Sub, [](const String &payload) {
+    dirValue = payload.substring(0, 1).toInt();    // Parse forward / backwards
+    speedValue = payload.substring(1, 5).toInt();  // Parse speed value
+    rotateValue = payload.substring(5, 8).toInt(); // Parse front wheel direction
   });
 }
 
-void DriveDirSpeed(int Dirpin, int Speedpin, int Direction, int Speed) {
+// ----- Update values to RC -------
+void DriveDirSpeed(int Dirpin, int Speedpin, int Direction, int Speed)
+{
   if (Direction == 1)
     Serial.println("Framåt");
   else
@@ -47,11 +47,12 @@ void DriveDirSpeed(int Dirpin, int Speedpin, int Direction, int Speed) {
 
   Serial.println("Hastighet: " + String(Speed));
 
-  digitalWrite(Dirpin, Direction);
-  analogWrite(Speedpin, Speed);
+  digitalWrite(Dirpin, Direction); // Update direction
+  analogWrite(Speedpin, Speed);    // Update speed
 }
 
-void setup() {
+void setup()
+{
   pinMode(motorPinDir, OUTPUT);
   pinMode(motorPinSpeed, OUTPUT);
   servo.attach(2); //D4
@@ -59,9 +60,10 @@ void setup() {
   Serial.begin(115200);
 }
 
-void loop() {
-  client.loop();
-  onConnectionEstablished();
-  servo.write(rotateValue);
-  DriveDirSpeed(motorPinDir, motorPinSpeed, dirValue, speedValue);
+void loop()
+{
+  client.loop();                                                   // Connect to client
+  onConnectionEstablished();                                       // Get values from controller
+  servo.write(rotateValue);                                        // Rotate steering wheel
+  DriveDirSpeed(motorPinDir, motorPinSpeed, dirValue, speedValue); // Update driving values
 }
