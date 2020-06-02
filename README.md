@@ -5,12 +5,25 @@
 - Styrning:
   - HTML
     - Range sliders
-    - Mätare
-    - Reverse knapp
-    - Reset knapp
-  - MQTT
-    - Publisher på hemsidan
-    - Subscriber i arduino
+      - Hastighet
+      - Riktning
+    - Mätare ( Visualisera svängning och hastighet )
+    - Reverse knapp ( Åka framåt eller bakåt )
+    - Reset knapp ( Stoppa bilen och återställa hemsidan )
+  - MQTT - maqiatto
+    - Publisher på hemsidan (Paho)
+      - Värde xyyyyzzz
+        - x = rikning ( 0 eller 1 )
+        - y = hastighet ( 0 eller 600 - 1023)
+          - 0 = stanna
+          - 600 = minimum
+          - 1023 = maximum
+        - z = svängning ( 0 - 180 )
+          - 0 Vänster
+          - 90 Rakt fram
+          - 180 Höger
+    - Subscriber i arduino ( EspMQTTClient och PubSubClient )
+      - Packa upp xyyyyzzz värdet
 - Konstrukton
   - CADa och printa
     - Servo hållare
